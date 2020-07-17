@@ -1027,6 +1027,7 @@ dependencies = [
 name = "sqlx-pgpool-bug"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "openssl",
  "sqlx",
  "tokio",

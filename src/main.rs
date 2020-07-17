@@ -1,6 +1,7 @@
 use std::env;
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
+use tokio::task;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
@@ -32,33 +33,21 @@ async fn main() -> Result<(), sqlx::Error> {
     }
     tx.commit().await?;
 
-    let query = "TRUNCATE demo"; // SELECT 1 works fine if you remove the assert_eq! below
-    let msg = "error returned from database: truncate is forbidden";
+    let mut handles = vec![];
+    for _ in 0..100 {
+        let pool = pool.clone();
+        let handle = task::spawn(async move {
+            let query = "TRUNCATE demo";
+            let msg = "error returned from database: truncate is forbidden";
 
-    let mut tx = pool.begin().await?;
-    let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), msg);
-    drop(tx);
-
-    let mut tx = pool.begin().await?;
-    let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), msg);
-    drop(tx);
-
-    let mut tx = pool.begin().await?;
-    let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), msg);
-    drop(tx);
-
-    let mut tx = pool.begin().await?;
-    let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), msg);
-    drop(tx);
-
-    let mut tx = pool.begin().await?;
-    let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), msg);
-    drop(tx);
+            let mut tx = pool.begin().await.unwrap();
+            let result = sqlx::query(query).execute(&mut tx).await;
+            assert_eq!(result.err().unwrap().to_string(), msg);
+            dbg!("asdf");
+        });
+        handles.push(handle);
+    }
+    futures::future::join_all(handles).await;
 
     Ok(())
 }
