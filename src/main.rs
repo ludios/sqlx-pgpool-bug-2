@@ -4,13 +4,12 @@ use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<(), sqlx::Error> {
-    // Create a connection pool
     let pool = PgPoolOptions::new()
         .max_connections(2)
         .connect_timeout(Duration::from_secs(3))
         .connect(&env::var("DATABASE_URL").unwrap()).await?;
 
-    let query = "blah blah"; // SELECT 1 works fine
+    let query = "blah blah"; // SELECT 1 works fine if you remove the assert_eq! below
 
     let mut tx = pool.begin().await?;
     let result = sqlx::query(query).execute(&mut tx).await;
