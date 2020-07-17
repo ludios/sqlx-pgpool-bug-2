@@ -9,23 +9,55 @@ async fn main() -> Result<(), sqlx::Error> {
         .connect_timeout(Duration::from_secs(3))
         .connect(&env::var("DATABASE_URL").unwrap()).await?;
 
-    let query = "blah blah"; // SELECT 1 works fine if you remove the assert_eq! below
+    let setup = ["
+        CREATE TABLE demo (id int PRIMARY KEY);
+    ", "
+        CREATE OR REPLACE FUNCTION raise_exception() RETURNS trigger AS $$
+        DECLARE
+            message text;
+        BEGIN
+            message := TG_ARGV[0];
+            RAISE EXCEPTION '%', message;
+        END;
+        $$ LANGUAGE plpgsql;
+    ", "
+        CREATE TRIGGER demo_forbid_truncate
+            BEFORE TRUNCATE ON demo
+            EXECUTE FUNCTION raise_exception('truncate is forbidden');
+    "];
+
+    let mut tx = pool.begin().await?;
+    for stmt in &setup {
+        sqlx::query(stmt).execute(&mut tx).await?;
+    }
+    tx.commit().await?;
+
+    let query = "TRUNCATE demo"; // SELECT 1 works fine if you remove the assert_eq! below
+    let msg = "error returned from database: truncate is forbidden";
 
     let mut tx = pool.begin().await?;
     let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), "error returned from database: syntax error at or near \"blah\"");
+    assert_eq!(result.err().unwrap().to_string(), msg);
     drop(tx);
 
     let mut tx = pool.begin().await?;
     let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), "error returned from database: syntax error at or near \"blah\"");
+    assert_eq!(result.err().unwrap().to_string(), msg);
     drop(tx);
 
-    println!("hanging for 3 seconds now");
     let mut tx = pool.begin().await?;
-    println!("not reached");
     let result = sqlx::query(query).execute(&mut tx).await;
-    assert_eq!(result.err().unwrap().to_string(), "error returned from database: syntax error at or near \"blah\"");
+    assert_eq!(result.err().unwrap().to_string(), msg);
+    drop(tx);
+
+    let mut tx = pool.begin().await?;
+    let result = sqlx::query(query).execute(&mut tx).await;
+    assert_eq!(result.err().unwrap().to_string(), msg);
+    drop(tx);
+
+    let mut tx = pool.begin().await?;
+    let result = sqlx::query(query).execute(&mut tx).await;
+    assert_eq!(result.err().unwrap().to_string(), msg);
     drop(tx);
 
     Ok(())
