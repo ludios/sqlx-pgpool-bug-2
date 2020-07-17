@@ -1,0 +1,14 @@
+[package]
+name = "sqlx-pgpool-bug"
+version = "0.1.0"
+authors = ["Ivan Kozik <ivan@ludios.org>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+tokio = { version = "0.2", features = ["macros", "rt-core", "fs", "io-util", "io-driver"] }
+sqlx = { git = "https://github.com/launchbadge/sqlx", default-features = false, features = [ "runtime-tokio", "macros", "postgres" ]  }
+openssl = { version = "0.10", features = [ "vendored" ] }
+futures = "0.3"
