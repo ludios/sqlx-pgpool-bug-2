@@ -5,7 +5,8 @@ authors = ["Ivan Kozik <ivan@ludios.org>"]
 edition = "2018"
 
 [dependencies]
-tokio = { version = "0.2" }
+#tokio = { version = "0.2" }
+tokio = { version = "0.2", features = ["macros", "rt-core", "fs", "io-util", "io-driver"] }
 sqlx = { git = "https://github.com/launchbadge/sqlx", default-features = false, features = ["runtime-tokio", "postgres"] }
 openssl = { version = "0.10", features = ["vendored"] }
 futures = "0.3"
