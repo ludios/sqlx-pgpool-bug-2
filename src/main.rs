@@ -44,12 +44,12 @@ async fn main() -> Result<(), sqlx::Error> {
         let pool = outer_pool.clone();
         let handle = task::spawn(async move {
             for (column, value) in &[
-                ("a", "1"),
                 ("b", "2"),
                 ("c", "3"),
                 ("d", "4"),
             ] {
                 let mut tx = pool.begin().await.unwrap();
+                // doesn't always fail because row may not exist
                 let query = format!("UPDATE demo SET {} = {} WHERE a = $1", column, value);
                 let result = sqlx::query(&query).bind(i).execute(&mut tx).await;
                 assert_eq!(result.err().expect("expected an error").to_string(), "error returned from database: cannot update");
