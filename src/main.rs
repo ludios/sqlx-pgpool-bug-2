@@ -46,7 +46,8 @@ pub(crate) mod tests {
     async fn test_b() -> Result<()> {
         let pool = pool().await;
 
-        for _ in 1..4 {
+        // You may need to adjust the number of iterations here
+        for _ in 1..3 {
             let mut tx = pool.begin().await?;
             let result = sqlx::query("blah blah").execute(&mut tx).await;
             assert_eq!(result.err().expect("expected an error").to_string(), "error returned from database: syntax error at or near \"blah\"");
