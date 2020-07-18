@@ -3,7 +3,6 @@ fn main() {}
 #[cfg(test)]
 pub(crate) mod tests {
     use std::env;
-    use anyhow::Result;
     use sqlx::postgres::{PgPoolOptions, PgPool};
     use std::time::Duration;
     use once_cell::sync::Lazy;
@@ -30,29 +29,26 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn test_a() -> Result<()> {
+    async fn test_a() {
         let pool = pool().await;
 
-        let mut tx = pool.begin().await?;
-        sqlx::query("SELECT * FROM pg_index").execute(&mut tx).await?;
-
-        let mut tx = pool.begin().await?;
-        sqlx::query("SELECT * FROM pg_index").execute(&mut tx).await?;
-
-        Ok(())
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SELECT * FROM pg_index").execute(&mut tx).await.unwrap();
+ 
+        // This second transaction is not always needed to see a failure
+        let mut tx = pool.begin().await.unwrap();
+        sqlx::query("SELECT * FROM pg_index").execute(&mut tx).await.unwrap();
     }
 
     #[tokio::test]
-    async fn test_b() -> Result<()> {
+    async fn test_b() {
         let pool = pool().await;
 
         // You may need to adjust the number of iterations here
         for _ in 1..3 {
-            let mut tx = pool.begin().await?;
+            let mut tx = pool.begin().await.unwrap();
             let result = sqlx::query("blah blah").execute(&mut tx).await;
             assert_eq!(result.err().expect("expected an error").to_string(), "error returned from database: syntax error at or near \"blah\"");
         }
-
-        Ok(())
     }
 }
