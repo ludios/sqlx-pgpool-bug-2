@@ -1,12 +1,16 @@
 [package]
-name = "sqlx-pgpool-bug"
+name = "sqlx-pgpool-bug-2"
 version = "0.1.0"
 authors = ["Ivan Kozik <ivan@ludios.org>"]
 edition = "2018"
 
 [dependencies]
-#tokio = { version = "0.2" }
+anyhow = "1.0"
+once_cell = "1"
+structopt = "0.3"
+sqlx = { git = "https://github.com/launchbadge/sqlx", default-features = false, features = [ "runtime-tokio", "macros", "postgres", "uuid", "chrono", "json" ] }
+# Vendored openssl for sqlx
+openssl = { version = "0.10", features = [ "vendored" ] }
 tokio = { version = "0.2", features = ["macros", "rt-core", "fs", "io-util", "io-driver"] }
-sqlx = { git = "https://github.com/launchbadge/sqlx", default-features = false, features = ["runtime-tokio", "postgres"] }
-openssl = { version = "0.10", features = ["vendored"] }
+tokio-util = { version = "0.3", features = ["compat"] }
 futures = "0.3"
